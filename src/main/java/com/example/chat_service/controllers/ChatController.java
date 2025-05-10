@@ -1,6 +1,7 @@
 package com.example.chat_service.controllers;
 
 import com.example.chat_service.dtos.ChatMessage;
+import com.example.chat_service.dtos.ChatroomDto;
 import com.example.chat_service.entitys.Chatroom;
 import com.example.chat_service.services.ChatService;
 import com.example.chat_service.vos.CustomOauth2User;
@@ -21,8 +22,11 @@ public class ChatController {
 
     // 채팅방 생성
     @PostMapping
-    public Chatroom createChatroom(@AuthenticationPrincipal CustomOauth2User user, @RequestParam String title) {
-        return chatService.createChatroom(user.getMember(), title);
+    //Chatroom은 entity 이기 떄문에 이걸로 반환하면 연관관계 때문에 ajax에서 데이터 처리르 못한다 그러므로 dto를 만들어서 처리
+    public ChatroomDto createChatroom(@AuthenticationPrincipal CustomOauth2User user, @RequestParam String title) {
+         Chatroom chatroom = chatService.createChatroom(user.getMember(), title);
+
+         return ChatroomDto.from(chatroom);
     }
 
     // 방 참여
@@ -37,10 +41,14 @@ public class ChatController {
         return chatService.leaveChatroom(user.getMember(), chatroomId);
     }
 
-    // 저체 채팅 방 목록
+    // 전체 채팅 방 목록
     @GetMapping
-    public List<Chatroom> getChatroomList(@AuthenticationPrincipal CustomOauth2User user) {
-        return chatService.getChatroomList(user.getMember());
+    public List<ChatroomDto> getChatroomList(@AuthenticationPrincipal CustomOauth2User user) {
+        List<Chatroom> chatroomList= chatService.getChatroomList(user.getMember());
+
+        return chatroomList.stream()
+                .map(ChatroomDto::from)
+                .toList();
     }
 
 

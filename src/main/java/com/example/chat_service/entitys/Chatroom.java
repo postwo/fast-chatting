@@ -26,4 +26,21 @@ public class Chatroom {
     Set<MemberChatroomMapping> memberChatroomMappingSet;
 
     LocalDateTime createdAt;
+
+    // 채팅방에 참여하는 사용자를 추가
+    public MemberChatroomMapping addMember(Member member) {
+        if (this.getMemberChatroomMappingSet() == null) {
+            this.memberChatroomMappingSet = new HashSet<>();
+        }
+
+        // 참여 정보
+        MemberChatroomMapping memberChatroomMapping = MemberChatroomMapping.builder()
+                .member(member)
+                .chatroom(this)
+                .build();
+
+        this.memberChatroomMappingSet.add(memberChatroomMapping);
+
+        return memberChatroomMapping;
+    }
 }

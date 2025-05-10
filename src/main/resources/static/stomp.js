@@ -4,6 +4,7 @@ const stompClient = new StompJs.Client({
 
 stompClient.onConnect = (frame) => {
   setConnected(true);
+  showChatrooms(); // 사용자가 참여자한 목록
   console.log('Connected: ' + frame);
 };
 
@@ -19,7 +20,7 @@ stompClient.onStompError = (frame) => {
 function setConnected(connected) {
   $("#connect").prop("disabled", connected);
   $("#disconnect").prop("disabled", !connected);
-  $("#create").prop("disabled", connected);
+  $("#create").prop("disabled", !connected);
 }
 
 function connect() {
@@ -36,7 +37,7 @@ function sendMessage() {
   let chatroomId = $("#chatroom-id").val();
 
   stompClient.publish({
-    destination: "/pub/chats",
+    destination: "/pub/chats/" + chatroomId,
     body: JSON.stringify(
         {'message': $("#message").val()})
   });
@@ -101,6 +102,7 @@ let subscription;
 // 처음 입장한 사람에게 입장 안내문을 작성
 function enterChatroom(chatroomId, newMember) {
   $("#chatroom-id").val(chatroomId);
+  $("#messages").html(""); //기존에 메시지를 초기화한다
   $("#conversation").show();
   $("#send").prop("disabled", false); // 버튼 활성화
   $("#leave").prop("disabled", false); // 버튼 활성화

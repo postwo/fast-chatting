@@ -5,6 +5,7 @@ import com.example.chat_service.entitys.Member;
 import com.example.chat_service.entitys.MemberChatroomMapping;
 import com.example.chat_service.repositories.ChatroomRepository;
 import com.example.chat_service.repositories.MemberChatroomMappingRepository;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -29,10 +30,7 @@ public class ChatService {
         chatroom = chatroomRepository.save(chatroom); // 채팅방 생성
 
         // 채팅방을 만든 자신은 기본적으로 참여하게 한다
-        MemberChatroomMapping memberChatroomMapping = MemberChatroomMapping.builder()
-                .member(member)
-                .chatroom(chatroom)
-                .build();
+        MemberChatroomMapping memberChatroomMapping = chatroom.addMember(member);
 
         memberChatroomMapping = memberChatroomMappingRepository.save(memberChatroomMapping);
 
@@ -61,6 +59,7 @@ public class ChatService {
     }
 
     // 이미 참여하고 있는 방을 나오기위한 메소드
+    @Transactional
     public Boolean leaveChatroom(Member member, Long chatroomId) {
         // 기존에 참여중인 방인지 아닌지 검사
         if (!memberChatroomMappingRepository.existsByMemberIdAndChatroomId(member.getId(), chatroomId)) {

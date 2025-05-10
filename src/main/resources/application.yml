@@ -1,3 +1,11 @@
+server:
+  servlet:
+    encoding:
+      charset: UTF-8
+      enabled: true
+      force: true
+
+
 spring:
   application:
     name: chat-service
