@@ -15,6 +15,11 @@ public class CustomOauth2User implements OAuth2User {
     Member member;
     Map<String, Object> attributeMap;
 
+    //OAuth2 로그인 사용자뿐만 아니라 일반 로그인 사용자도 CustomOauth2User 객체를 통해 관리할 수 있게 설계
+    public Member getMember() {
+        return this.member;
+    }
+
     @Override
     public Map<String, Object> getAttributes() {
         return this.attributeMap;
