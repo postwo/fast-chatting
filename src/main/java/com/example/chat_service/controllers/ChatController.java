@@ -3,6 +3,7 @@ package com.example.chat_service.controllers;
 import com.example.chat_service.dtos.ChatMessage;
 import com.example.chat_service.dtos.ChatroomDto;
 import com.example.chat_service.entitys.Chatroom;
+import com.example.chat_service.entitys.Message;
 import com.example.chat_service.services.ChatService;
 import com.example.chat_service.vos.CustomOauth2User;
 import lombok.RequiredArgsConstructor;
@@ -48,6 +49,15 @@ public class ChatController {
 
         return chatroomList.stream()
                 .map(ChatroomDto::from)
+                .toList();
+    }
+
+    // 채팅방 메시지가져오기
+    @GetMapping("/{chatroomId}/messages")
+    public List<ChatMessage> getMessageList(@PathVariable Long chatroomId) {
+        List<Message> messageList = chatService.getMessageList(chatroomId);
+        return messageList.stream()
+                .map(message -> new ChatMessage(message.getMember().getNickName(), message.getText()))
                 .toList();
     }
 

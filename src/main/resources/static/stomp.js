@@ -44,11 +44,6 @@ function sendMessage() {
   $("#message").val("")
 }
 
-function showMessage(chatMessage) {
-  $("#messages").append(
-      "<tr><td>" + chatMessage.sender + " : " + chatMessage.message
-      + "</td></tr>");
-}
 
 function createChatroom() { // 서버에서 호출
   $.ajax({
@@ -102,7 +97,8 @@ let subscription;
 // 처음 입장한 사람에게 입장 안내문을 작성
 function enterChatroom(chatroomId, newMember) {
   $("#chatroom-id").val(chatroomId);
-  $("#messages").html(""); //기존에 메시지를 초기화한다
+  $("#messages").html(""); //과거에 메시지를 지워준다
+  showMessages(chatroomId); //과거 메시지를 받아온다
   $("#conversation").show();
   $("#send").prop("disabled", false); // 버튼 활성화
   $("#leave").prop("disabled", false); // 버튼 활성화
@@ -126,6 +122,30 @@ function enterChatroom(chatroomId, newMember) {
           {'message': "님이 방에 들어왔습니다."})
     })
   }
+}
+
+function showMessages(chatroomId) { // 메시지 내역 가지고오기
+  $.ajax({
+    type: 'GET',
+    dataType: 'json',
+    url: '/chats/' + chatroomId + '/messages',
+    success: function (data) {
+      console.log('data: ', data);
+      for (let i = 0; i < data.length; i++) {
+        showMessage(data[i]);
+      }
+    },
+    error: function (request, status, error) {
+      console.log('request: ', request);
+      console.log('error: ', error);
+    },
+  })
+}
+
+function showMessage(chatMessage) {
+  $("#messages").append(
+      "<tr><td>" + chatMessage.sender + " : " + chatMessage.message
+      + "</td></tr>");
 }
 
 function joinChatroom(chatroomId) {

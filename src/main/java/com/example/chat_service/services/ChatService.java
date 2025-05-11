@@ -3,8 +3,10 @@ package com.example.chat_service.services;
 import com.example.chat_service.entitys.Chatroom;
 import com.example.chat_service.entitys.Member;
 import com.example.chat_service.entitys.MemberChatroomMapping;
+import com.example.chat_service.entitys.Message;
 import com.example.chat_service.repositories.ChatroomRepository;
 import com.example.chat_service.repositories.MemberChatroomMappingRepository;
+import com.example.chat_service.repositories.MessageRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -20,6 +22,7 @@ public class ChatService {
 
     private final ChatroomRepository chatroomRepository;
     private final MemberChatroomMappingRepository memberChatroomMappingRepository;
+    private final MessageRepository messageRepository;
 
     public Chatroom createChatroom(Member member, String title) { //member =채팅방을 누가 만드는지, title=채팅방의 제목
         Chatroom chatroom = Chatroom.builder()
@@ -80,6 +83,25 @@ public class ChatService {
         return memberChatroomMappingList.stream()
                 .map(MemberChatroomMapping :: getChatroom)//MemberChatroomMapping 객체에서 Chatroom을 추출 ✔ 결과적으로 Chatroom 리스트로 변환
                 .toList();
+    }
+
+    // 메시지 저장
+    public Message saveMessage(Member member, Long chatroomId, String text) {
+        Chatroom chatroom = chatroomRepository.findById(chatroomId).get(); // 채팅방 존재 확인
+
+        Message message = Message.builder()
+                .text(text)
+                .member(member)
+                .chatroom(chatroom)
+                .createdAt(LocalDateTime.now())
+                .build();
+
+        return messageRepository.save(message);
+    }
+
+    // 메시니 내역 가져오기
+    public List<Message> getMessageList(Long chatroomId) {
+        return messageRepository.findAllByChatroomId(chatroomId);
     }
 
 }
