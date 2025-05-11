@@ -32,8 +32,8 @@ public class ChatController {
 
     // 방 참여
     @PostMapping("/{chatroomId}")
-    public Boolean joinChatroom(@AuthenticationPrincipal CustomOauth2User user, @PathVariable Long chatroomId) {
-        return chatService.joinChatroom(user.getMember(), chatroomId);
+    public Boolean joinChatroom(@AuthenticationPrincipal CustomOauth2User user, @PathVariable Long chatroomId, @RequestParam(required = false) Long currentChatroomId) {
+        return chatService.joinChatroom(user.getMember(), chatroomId ,currentChatroomId);
     }
 
     // 채티방 나가기

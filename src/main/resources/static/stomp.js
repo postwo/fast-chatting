@@ -171,10 +171,12 @@ function showMessage(chatMessage) {
 }
 
 function joinChatroom(chatroomId) {
+  let currentChatroomId = $("#chatroom-id").val(); // 현재 참여중인 방 있다면 아이디값가지고 오기
+
   $.ajax({
     type: 'POST',
     dataType: 'json',
-    url: '/chats/' + chatroomId,
+    url: '/chats/' + chatroomId + getRequestParam(currentChatroomId),
     success: function (data) {
       console.log('data: ', data);
       enterChatroom(chatroomId, data);
@@ -185,6 +187,15 @@ function joinChatroom(chatroomId) {
     },
   })
 }
+
+function getRequestParam(currentChatroomId) {
+  if (currentChatroomId == "") {
+    return "";
+  }
+
+  return "?currentChatroomId=" + currentChatroomId;
+}
+
 
 // 현재 참여중인 방에서 나가기
 function leaveChatroom() {

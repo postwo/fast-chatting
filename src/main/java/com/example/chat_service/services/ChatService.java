@@ -42,13 +42,17 @@ public class ChatService {
 
 
     // 다른 사람이 만든 채팅방에 사용자가 참여하는 메소드
-    public Boolean joinChatroom(Member member, Long ChatroomId) {
-        if (memberChatroomMappingRepository.existsByMemberIdAndChatroomId(member.getId(), ChatroomId)) {// 현재 참여중인 방인지 체크
+    public Boolean joinChatroom(Member member, Long newChatroomId, Long currentChatroomId) { //currentChatroomId = 어떤 방에서 어떤 방으로 이동 하는지 체크
+        if (currentChatroomId != null) { //현재 사용자가 currentChatroomId 방에 참여하고 있다면, 해당 방에서 이동하기 전에 마지막 확인 시간을 기록
+            updateLastCheckedAt(member, currentChatroomId);
+        }
+
+        if (memberChatroomMappingRepository.existsByMemberIdAndChatroomId(member.getId(), newChatroomId)) {// 현재 참여중인 방인지 체크
             log.info("이미 참여한 채팅방입니다.");
             return false;
         }
 
-        Chatroom chatroom = chatroomRepository.findById(ChatroomId).get();
+        Chatroom chatroom = chatroomRepository.findById(newChatroomId).get();
 
         // 참여하고 있지 않다면 새로운 참여정보를 저장
         MemberChatroomMapping memberChatroomMapping = MemberChatroomMapping.builder()
@@ -59,6 +63,15 @@ public class ChatService {
         memberChatroomMapping = memberChatroomMappingRepository.save(memberChatroomMapping);
 
         return true;
+    }
+
+    // 방이동전 마지막 시간 체크
+    private void updateLastCheckedAt(Member member, Long currentChatroomId) {
+        MemberChatroomMapping memberChatroomMapping = memberChatroomMappingRepository.findByMemberIdAndChatroomId(member.getId(), currentChatroomId)
+                .get();
+        memberChatroomMapping.updateLastCheckedAt(); // 현재 시간으로 업데이트
+
+        memberChatroomMappingRepository.save(memberChatroomMapping);
     }
 
     // 이미 참여하고 있는 방을 나오기위한 메소드
