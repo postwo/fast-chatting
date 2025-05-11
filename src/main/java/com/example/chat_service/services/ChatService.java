@@ -81,7 +81,12 @@ public class ChatService {
         List<MemberChatroomMapping> memberChatroomMappingList = memberChatroomMappingRepository.findAllByMemberId(member.getId());
 
         return memberChatroomMappingList.stream()
-                .map(MemberChatroomMapping :: getChatroom)//MemberChatroomMapping 객체에서 Chatroom을 추출 ✔ 결과적으로 Chatroom 리스트로 변환
+                .map(MemberChatroomMapping ->{
+                    Chatroom chatroom = MemberChatroomMapping.getChatroom();
+                    chatroom.setHasNewMessage(
+                            messageRepository.existsByChatroomIdAndCreatedAtAfter(chatroom.getId(), MemberChatroomMapping.getLastCheckedAt()));
+                    return chatroom;
+                })
                 .toList();
     }
 

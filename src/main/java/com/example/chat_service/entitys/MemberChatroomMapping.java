@@ -28,4 +28,5 @@ public class MemberChatroomMapping {
     @ManyToOne
     Chatroom chatroom;
 
+    LocalDateTime lastCheckedAt;
 }

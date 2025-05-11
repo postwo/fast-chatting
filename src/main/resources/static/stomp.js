@@ -5,8 +5,20 @@ const stompClient = new StompJs.Client({
 stompClient.onConnect = (frame) => {
   setConnected(true);
   showChatrooms(); // 사용자가 참여자한 목록
+  stompClient.subscribe('/sub/chats/news',
+  (chatMessage) => {
+    toggleNewMessageIcon(JSON.parse(chatMessage.body), true);
+  });
   console.log('Connected: ' + frame);
 };
+
+function toggleNewMessageIcon(chatroomId, toggle) {
+  if (toggle) {
+    $("#new_" + chatroomId).show(); //new icon 이미지를 보여주고
+  } else {
+    $("#new_" + chatroomId).hide(); //new icon 이미지를 안 보여주고
+  }
+}
 
 stompClient.onWebSocketError = (error) => {
   console.error('Error with websocket', error);
@@ -85,11 +97,20 @@ function renderChatrooms(chatrooms) { // 서버에서 받아온데이터를 활�
   for (let i = 0; i < chatrooms.length; i++) {
     $("#chatroom-list").append(
         "<tr onclick='joinChatroom(" + chatrooms[i].id + ")'><td>"
-        + chatrooms[i].id + "</td><td>" + chatrooms[i].title + "</td><td>"
+        + chatrooms[i].id + "</td><td>" + chatrooms[i].title
+        + "<img src='new.png' id='new_" + chatrooms[i].id + "' style='display: "
+        + getDisplayValue(chatrooms[i].hasNewMessage) + "'/></td><td>"
         + chatrooms[i].memberCount + "</td><td>" + chatrooms[i].createdAt
         + "</td></tr>"
     );
   }
+}
+
+function getDisplayValue(hasNewMessage) {
+  if (hasNewMessage) {
+    return "inline"; // true인경우 이미지를 보여주고
+  }
+  return "none"; // false인경우 이미지를 안 보여준다
 }
 
 let subscription;
@@ -102,6 +123,7 @@ function enterChatroom(chatroomId, newMember) {
   $("#conversation").show();
   $("#send").prop("disabled", false); // 버튼 활성화
   $("#leave").prop("disabled", false); // 버튼 활성화
+  toggleNewMessageIcon(chatroomId, false);
 
  //  기존에 가지고 있던 채팅방이 존재한다면
   if (subscription != undefined) {
