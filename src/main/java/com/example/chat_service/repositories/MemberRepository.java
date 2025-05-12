@@ -10,4 +10,6 @@ public interface MemberRepository extends JpaRepository<Member, Long> {
 
     // 기존에 가입된 회원인지 검사
     Optional<Member> findByEmail(String email);
+
+    Optional<Member> findByName(String username);
 }

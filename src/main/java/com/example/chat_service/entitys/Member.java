@@ -6,6 +6,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.time.LocalDate;
 
@@ -32,4 +33,11 @@ public class Member { // 카카오에서 받아오는 데이터랑 맞춘거다
     String role;
 
 
+    public void updatePassword(String password, String confirmedPassword, PasswordEncoder passwordEncoder) {
+        if(!password.equals(confirmedPassword)) {
+            throw new IllegalArgumentException("패스워드가 일치하지 않습니다.");
+        }
+
+        this.password = passwordEncoder.encode(password);
+    }
 }
