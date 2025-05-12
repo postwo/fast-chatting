@@ -4,20 +4,28 @@ const stompClient = new StompJs.Client({
 
 stompClient.onConnect = (frame) => {
   setConnected(true);
-  showChatrooms(); // 사용자가 참여자한 목록
-  stompClient.subscribe('/sub/chats/news',
-  (chatMessage) => {
-    toggleNewMessageIcon(JSON.parse(chatMessage.body), true);
-  });
+  showChatrooms(0);
+  stompClient.subscribe('/sub/chats/updates',
+      (chatMessage) => {
+        toggleNewMessageIcon(JSON.parse(chatMessage.body).id, true);
+        updateMemberCount(JSON.parse(chatMessage.body));
+      });
   console.log('Connected: ' + frame);
 };
 
 function toggleNewMessageIcon(chatroomId, toggle) {
-  if (toggle) {
-    $("#new_" + chatroomId).show(); //new icon 이미지를 보여주고
-  } else {
-    $("#new_" + chatroomId).hide(); //new icon 이미지를 안 보여주고
+  if (chatroomId == $("#chatroom-id").val()) {
+    return;
   }
+  if (toggle) {
+    $("#new_" + chatroomId).show();
+  } else {
+    $("#new_" + chatroomId).hide();
+  }
+}
+
+function updateMemberCount(chatroom) {
+  $("#memberCount_" + chatroom.id).html(chatroom.memberCount);
 }
 
 stompClient.onWebSocketError = (error) => {
@@ -47,7 +55,6 @@ function disconnect() {
 
 function sendMessage() {
   let chatroomId = $("#chatroom-id").val();
-
   stompClient.publish({
     destination: "/pub/chats/" + chatroomId,
     body: JSON.stringify(
@@ -56,16 +63,14 @@ function sendMessage() {
   $("#message").val("")
 }
 
-
-function createChatroom() { // 서버에서 호출
+function createChatroom() {
   $.ajax({
     type: 'POST',
-    dataType: 'json', //서버에서 반환하는 데이터를 JSON 형태로 받겠다는 의미
-    //클라이언트(프론트)에서 서버에 데이터를 넘길 때는 contentType: 'application/json'을 지정해야 JSON 형식으로 전송
+    dataType: 'json',
     url: '/chats?title=' + $("#chatroom-title").val(),
     success: function (data) {
       console.log('data: ', data);
-      showChatrooms();
+      showChatrooms(0);
       enterChatroom(data.id, true);
     },
     error: function (request, status, error) {
@@ -75,11 +80,11 @@ function createChatroom() { // 서버에서 호출
   })
 }
 
-function showChatrooms() { // 채팅방 목록을 서버에서 받아온다
+function showChatrooms(pageNumber) {
   $.ajax({
     type: 'GET',
     dataType: 'json',
-    url: '/chats',
+    url: '/consultants/chats?sort=id,desc&page=' + pageNumber,
     success: function (data) {
       console.log('data: ', data);
       renderChatrooms(data);
@@ -91,52 +96,64 @@ function showChatrooms() { // 채팅방 목록을 서버에서 받아온다
   })
 }
 
-// 채팅방 목록
-function renderChatrooms(chatrooms) { // 서버에서 받아온데이터를 활용
-  $("#chatroom-list").html(""); // 기존에 가지고 있던 채팅방 모록을 초기화
+function renderChatrooms(page) {
+  let chatrooms = page.content;
+  $("#chatroom-list").html("");
   for (let i = 0; i < chatrooms.length; i++) {
     $("#chatroom-list").append(
         "<tr onclick='joinChatroom(" + chatrooms[i].id + ")'><td>"
         + chatrooms[i].id + "</td><td>" + chatrooms[i].title
         + "<img src='new.png' id='new_" + chatrooms[i].id + "' style='display: "
-        + getDisplayValue(chatrooms[i].hasNewMessage) + "'/></td><td>"
+        + getDisplayValue(chatrooms[i].hasNewMessage)
+        + "'/></td><td id='memberCount_" + chatrooms[i].id + "'>"
         + chatrooms[i].memberCount + "</td><td>" + chatrooms[i].createdAt
         + "</td></tr>"
     );
+  }
+
+  if (page.first) {
+    $("#prev").prop("disabled", true);
+  } else {
+    $("#prev").prop("disabled", false).click(
+        () => showChatrooms(page.number - 1));
+  }
+
+  if (page.last) {
+    $("#next").prop("disabled", true);
+  } else {
+    $("#next").prop("disabled", false).click(
+        () => showChatrooms(page.number + 1));
   }
 }
 
 function getDisplayValue(hasNewMessage) {
   if (hasNewMessage) {
-    return "inline"; // true인경우 이미지를 보여주고
+    return "inline";
   }
-  return "none"; // false인경우 이미지를 안 보여준다
+
+  return "none";
 }
 
 let subscription;
 
-// 처음 입장한 사람에게 입장 안내문을 작성
 function enterChatroom(chatroomId, newMember) {
   $("#chatroom-id").val(chatroomId);
-  $("#messages").html(""); //과거에 메시지를 지워준다
-  showMessages(chatroomId); //과거 메시지를 받아온다
+  $("#messages").html("");
+  showMessages(chatroomId);
   $("#conversation").show();
-  $("#send").prop("disabled", false); // 버튼 활성화
-  $("#leave").prop("disabled", false); // 버튼 활성화
+  $("#send").prop("disabled", false);
+  $("#leave").prop("disabled", false);
   toggleNewMessageIcon(chatroomId, false);
 
- //  기존에 가지고 있던 채팅방이 존재한다면
   if (subscription != undefined) {
-    subscription.unsubscribe(); // 구독을 취소
+    subscription.unsubscribe();
   }
 
- // 새로운 방에 구독
   subscription = stompClient.subscribe('/sub/chats/' + chatroomId,
       (chatMessage) => {
         showMessage(JSON.parse(chatMessage.body));
       });
 
- // 이방에 처음 들어오는 맴버면 동작
   if (newMember) {
     stompClient.publish({
       destination: "/pub/chats/" + chatroomId,
@@ -146,7 +163,7 @@ function enterChatroom(chatroomId, newMember) {
   }
 }
 
-function showMessages(chatroomId) { // 메시지 내역 가지고오기
+function showMessages(chatroomId) {
   $.ajax({
     type: 'GET',
     dataType: 'json',
@@ -171,7 +188,7 @@ function showMessage(chatMessage) {
 }
 
 function joinChatroom(chatroomId) {
-  let currentChatroomId = $("#chatroom-id").val(); // 현재 참여중인 방 있다면 아이디값가지고 오기
+  let currentChatroomId = $("#chatroom-id").val();
 
   $.ajax({
     type: 'POST',
@@ -196,17 +213,15 @@ function getRequestParam(currentChatroomId) {
   return "?currentChatroomId=" + currentChatroomId;
 }
 
-
-// 현재 참여중인 방에서 나가기
 function leaveChatroom() {
-  let chatroomId = $("#chatroom-id").val(); // 현재 참여중인 방 아이디값가지고 오기
-  $.ajax({ // 서버에 호출
+  let chatroomId = $("#chatroom-id").val();
+  $.ajax({
     type: 'DELETE',
     dataType: 'json',
     url: '/chats/' + chatroomId,
     success: function (data) {
       console.log('data: ', data);
-      showChatrooms(); // 채팅방 목록 갱신
+      showChatrooms(0);
       exitChatroom(chatroomId);
     },
     error: function (request, status, error) {
@@ -217,7 +232,7 @@ function leaveChatroom() {
 }
 
 function exitChatroom(chatroomId) {
-  $("#chatroom-id").val(""); // 현재 들어가 있는 방이없기 떄문에 초기화
+  $("#chatroom-id").val("");
   $("#conversation").hide();
   $("#send").prop("disabled", true);
   $("#leave").prop("disabled", true);

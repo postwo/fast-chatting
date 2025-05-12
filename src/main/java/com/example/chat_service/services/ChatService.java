@@ -1,5 +1,6 @@
 package com.example.chat_service.services;
 
+import com.example.chat_service.dtos.ChatroomDto;
 import com.example.chat_service.entitys.Chatroom;
 import com.example.chat_service.entitys.Member;
 import com.example.chat_service.entitys.MemberChatroomMapping;
@@ -7,10 +8,10 @@ import com.example.chat_service.entitys.Message;
 import com.example.chat_service.repositories.ChatroomRepository;
 import com.example.chat_service.repositories.MemberChatroomMappingRepository;
 import com.example.chat_service.repositories.MessageRepository;
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -117,9 +118,14 @@ public class ChatService {
         return messageRepository.save(message);
     }
 
-    // 메시니 내역 가져오기
+    // 메시지 내역 가져오기
     public List<Message> getMessageList(Long chatroomId) {
         return messageRepository.findAllByChatroomId(chatroomId);
     }
 
+    @Transactional(readOnly = true)
+    public ChatroomDto getChatroom(Long chatroomId) {
+       Chatroom chatroom = chatroomRepository.findById(chatroomId).get();
+       return ChatroomDto.from(chatroom);
+    }
 }

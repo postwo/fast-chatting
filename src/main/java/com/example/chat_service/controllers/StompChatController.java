@@ -1,6 +1,7 @@
 package com.example.chat_service.controllers;
 
 import com.example.chat_service.dtos.ChatMessage;
+import com.example.chat_service.dtos.ChatroomDto;
 import com.example.chat_service.entitys.Message;
 import com.example.chat_service.services.ChatService;
 import com.example.chat_service.vos.CustomOauth2User;
@@ -11,7 +12,7 @@ import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.messaging.handler.annotation.SendTo;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
-import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
+import org.springframework.security.authentication.AbstractAuthenticationToken;
 import org.springframework.stereotype.Controller;
 
 import java.security.Principal;
@@ -31,9 +32,9 @@ public class StompChatController {
     @SendTo("/sub/chats/{chatroomId}") // 여기 return message를 구독자(sub/chats를 구독하고 있는 사람들)들에게로 전달
     public ChatMessage handleMessage(Principal principal, @DestinationVariable Long chatroomId, @Payload Map<String,String> payload){
         log.info("{} received {} in {}", principal.getName(),payload ,chatroomId);
-        CustomOauth2User user = (CustomOauth2User) ((OAuth2AuthenticationToken) principal).getPrincipal();
+        CustomOauth2User user = (CustomOauth2User) ((AbstractAuthenticationToken) principal).getPrincipal();
         Message message = chatService.saveMessage(user.getMember(), chatroomId, payload.get("message"));
-        messagingTemplate.convertAndSend("/sub/chats/news", chatroomId); //채팅방에 새로운 메시지를 발행
+        messagingTemplate.convertAndSend("/sub/chats/updates", chatService.getChatroom(chatroomId)); //채팅방에 새로운 메시지를 발행
 
         return new ChatMessage(principal.getName(),payload.get("message")); // 다른 클라이언트에게 전달
     }
