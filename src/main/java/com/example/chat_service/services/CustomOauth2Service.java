@@ -44,7 +44,7 @@ public class CustomOauth2Service extends DefaultOAuth2UserService {
                 .phoneNumber((String) attributeMap.get("phoneNumber"))
                 .gender(Gender.valueOf(((String) attributeMap.get("gender")).toUpperCase()))
                 .birthDay(getBirthDay(attributeMap))
-                .role("USER_ROLE")
+                .role("ROLE_USER")
                 .build();
 
         return memberRepository.save(member);

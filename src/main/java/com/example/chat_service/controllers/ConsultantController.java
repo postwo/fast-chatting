@@ -1,11 +1,9 @@
 package com.example.chat_service.controllers;
 
-import com.example.chat_service.dtos.ChatroomDto;
 import com.example.chat_service.dtos.MemberDto;
 import com.example.chat_service.services.CustomUserDetailsService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
@@ -28,6 +26,6 @@ public class ConsultantController {
         return "consultants/index.html";
     }
 
-    
+
 
 }
